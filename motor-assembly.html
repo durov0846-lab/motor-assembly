@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Электрқозғалтқышты монтаждау симуляторы</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#0f172a;--mut:#64748b;--blue:#0b1d3a;--acc:#38bdf8;--warn:#f5b400;--danger:#e11d48;--line:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1020;--card:#131a2e;--ink:#e6ebf3;--mut:#94a3b8;--blue:#050914;--line:#1e2a44}}
+:root[data-theme="dark"]{--bg:#0b1020;--card:#131a2e;--ink:#e6ebf3;--mut:#94a3b8;--blue:#050914;--line:#1e2a44}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);padding-bottom:env(safe-area-inset-bottom,0px)}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--blue);color:#fff;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 16px;z-index:5}
+header b{font-size:15px;color:var(--acc)}
+nav button{background:none;border:0;color:#cbd5e1;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:14px}
+nav button.on,nav button:hover{background:#1e3a5f;color:#fff}
+main{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
+.page{display:none}.page.on{display:block}
+h1{font-size:clamp(24px,4vw,40px);margin:8px 0}
+h2{font-size:22px;margin:24px 0 10px}
+h3{font-size:17px;margin:14px 0 6px}
+.sub{color:var(--mut);font-size:17px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:10px 0}
+.btn{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;margin:4px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.stage{position:relative;width:100%;height:100%;min-height:300px;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 30%,#1e3a5f,#0b1d3a)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.tools{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px;z-index:2}
+.tools button{width:38px;height:38px;border-radius:8px;border:0;background:rgba(15,23,42,.75);color:#fff;font-size:18px;cursor:pointer}
+#fb{display:none;position:absolute;inset:0;padding:12px}
+#fb svg{width:100%;height:100%}
+.stage.fb canvas,.stage.fb .tools{display:none}
+.stage.fb #fb{display:block}
+.hero-slot{height:440px;margin:16px 0}
+.sim{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+.sim-stage{height:540px}
+@media(max-width:820px){.sim{grid-template-columns:1fr}.sim-stage{height:380px}.hero-slot{height:340px}}
+.prog{display:flex;gap:6px;margin:10px 0}
+.prog button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:8px 4px;cursor:pointer;font-size:13px}
+.prog button.done{border-color:var(--acc)}
+.prog button.on{background:var(--acc);color:#04111f;border-color:var(--acc);font-weight:700}
+.parts button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);padding:8px 4px;cursor:pointer;font-size:15px}
+.parts button.on{color:var(--acc);font-weight:600}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.flow span{background:var(--blue);color:#fff;padding:6px 10px;border-radius:6px;font-size:14px}
+.flow i{font-style:normal;color:var(--mut)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.warn{border-left:4px solid var(--warn)}
+.danger{border-left:4px solid var(--danger)}
+.badge{display:inline-block;background:var(--warn);color:#111;border-radius:6px;padding:2px 8px;font-weight:700;font-size:13px}
+.ok{color:#16a34a;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <b>Монтаж симуляторы</b>
+  <nav>
+    <button data-p="home" class="on">Басты бет</button>
+    <button data-p="theory">Теория</button>
+    <button data-p="sim">Монтаж</button>
+    <button data-p="safety">Қауіпсіздік</button>
+    <button data-p="final">Қорытынды</button>
+  </nav>
+</header>
+
+<main>
+  <section class="page on" id="home">
+    <h1>Механизмдерді монтаждау жұмыстарын жобалаудың негізгі принциптері</h1>
+    <div class="sub">Электрқозғалтқышты монтаждау мысалында</div>
+    <div class="hero-slot" id="heroSlot"></div>
+    <button class="btn" data-go="sim">Монтажды бастау</button>
+  </section>
+
+  <section class="page" id="theory">
+    <h2>Механизм дегеніміз не?</h2>
+    <div class="card"><p>Механизм – бір немесе бірнеше дененің қозғалысын қажетті бағытта қамтамасыз ететін және энергияны бір элементтен екіншісіне беретін өзара байланысқан бөлшектер жүйесі.</p></div>
+    <p>Мысалдар: электрқозғалтқыш, редуктор, сорғы, желдеткіш, конвейер жетегі, клапан жетегі, атқарушы механизм, беріліс механизмдері.</p>
+
+    <h2>Монтаждау дегеніміз не?</h2>
+    <p>Монтаждау – жабдықты, механизмдерді және олардың элементтерін белгіленген орнына орнатып, өзара байланыстырып, жұмысқа дайындау процесі.</p>
+    <div class="flow">
+      <span>Орнату</span><i>→</i><span>Бекіту</span><i>→</i><span>Қосу</span><i>→</i><span>Реттеу</span><i>→</i><span>Тексеру</span><i>→</i><span>Сынау</span><i>→</i><span>Пайдалануға беру</span>
+    </div>
+
+    <h2>Монтаждаудың негізгі принциптері</h2>
+    <div class="grid3">
+      <div class="card"><h3>1. Технологиялық негізділік</h3><p>Монтаж нақты технологиялық реттілікпен орындалуы керек.</p></div>
+      <div class="card"><h3>2. Дәлдік</h3><p>Горизонтальдық, вертикальдық, осьтердің сәйкестігі, арақашықтық және бұрыштық орналасу.</p></div>
+      <div class="card"><h3>3. Сенімділік</h3><p>Дұрыс бекіту, сапалы қосылыс, материалдардың сәйкестігі, дұрыс туралау, дірілдің болмауы, қоршаған орта жағдайлары және дұрыс реттеу.</p></div>
+      <div class="card"><h3>4. Қауіпсіздік</h3><p>⚡ электр тогы · ⚙ айналмалы бөлшектер · 🔥 жоғары температура · 💨 қысым · 🏗 көтеру механизмдері · 🔊 шу және діріл</p></div>
+      <div class="card"><h3>5. Қызмет көрсетуге қолжетімділік</h3><p>Механизм кейін тексеруге, майлауға, бөлшектерін ауыстыруға және жөндеуге қолайлы орналасуы керек.</p></div>
+      <div class="card"><h3>6. Автоматтандыру жүйесімен сәйкестік</h3><p>Датчик → PLC → Басқару сигналы → Атқарушы механизм → Технологиялық процесс.</p></div>
+    </div>
+    <button class="btn" data-go="sim">Монтажға өту</button>
+  </section>
+
+  <section class="page" id="sim">
+    <h2>Электрқозғалтқышты монтаждау</h2>
+    <div class="prog" id="prog"></div>
+    <div class="sim">
+      <div class="sim-stage" id="simSlot"></div>
+      <div>
+        <div class="card">
+          <span class="badge" id="cnt">01 / 07</span>
+          <h3 id="stT"></h3>
+          <p id="stD"></p>
+          <p id="stX"></p>
+          <button class="btn ghost" id="prev">← Алдыңғы</button>
+          <button class="btn" id="next">Келесі →</button>
+        </div>
+        <div class="card parts" id="parts"><h3>Электрқозғалтқыш бөлшектері</h3></div>
+        <div class="card" id="pinfo">Бөлшекті таңдап, оның атауын көріңіз.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="safety">
+    <h2>Қауіпсіздік</h2>
+    <div class="card danger"><h3>⚡ Монтаж алдында міндетті түрде</h3>
+      <p>Жабдық ажыратылады, кернеудің жоқтығы тексеріледі, жұмыс орны дайындалады, жеке қорғаныс құралдары қолданылады және қауіпті аймақ белгіленеді.</p></div>
+    <div class="grid3">
+      <div class="card warn"><h3>⚡ Электр тогы</h3><p>Кернеу жоқтығын тексермей қосылыстарға қол тигізбеңіз.</p></div>
+      <div class="card warn"><h3>⚙ Айналмалы бөлшектер</h3><p>Білік пен желдеткіш тоқтағанша жақындамаңыз.</p></div>
+      <div class="card warn"><h3>🔥 Жоғары температура</h3><p>Қызған корпусқа тимей, салқындатуын күтіңіз.</p></div>
+      <div class="card warn"><h3>🏗 Көтеру механизмдері</h3><p>Ауыр бөлшекті тек бекітілген тәсілмен көтеріңіз.</p></div>
+      <div class="card warn"><h3>🔊 Шу және діріл</h3><p>Шамадан тыс діріл байқалса, жұмысты тоқтатыңыз.</p></div>
+    </div>
+    <button class="btn" data-go="sim">Монтажға оралу</button>
+  </section>
+
+  <section class="page" id="final">
+    <h1>Электрқозғалтқышты монтаждау аяқталды</h1>
+    <p class="ok">7 монтаж кезеңі аяқталды</p>
+    <button class="btn" id="again">Монтаж реттілігін қайта көру</button>
+    <button class="btn ghost" data-go="theory">Теорияға оралу</button>
+  </section>
+</main>
+
+<div id="holder" hidden>
+  <div class="stage" id="stage">
+    <div class="tools">
+      <button id="tAuto" title="Айналдыру">↻</button>
+      <button id="tIn" title="Жақындату">＋</button>
+      <button id="tOut" title="Алыстату">−</button>
+      <button id="tReset" title="Бастапқы қалып">⟳</button>
+    </div>
+    <div id="fb">
+      <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+        <rect data-id="fanCover" x="18" y="92" width="10" height="86" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <rect data-id="fan" x="26" y="100" width="28" height="70" fill="#0ea5e9"/>
+        <rect data-id="rear" x="54" y="100" width="12" height="70" fill="#64748b"/>
+        <rect data-id="housing" x="66" y="92" width="240" height="86" fill="#475569" fill-opacity=".45" stroke="#94a3b8"/>
+        <rect data-id="stator" x="90" y="108" width="190" height="54" fill="#b87333" fill-opacity=".8"/>
+        <rect data-id="rotor" x="100" y="120" width="170" height="30" fill="#94a3b8"/>
+        <rect data-id="front" x="306" y="100" width="12" height="70" fill="#64748b"/>
+        <line data-id="shaft" x1="20" y1="135" x2="350" y2="135" stroke="#cbd5e1" stroke-width="6"/>
+        <rect data-id="terminal" x="180" y="56" width="50" height="36" fill="#1e293b" stroke="#38bdf8"/>
+        <path data-id="cable" d="M205 56 Q240 20 290 40" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+        <rect data-id="feet" x="100" y="178" width="36" height="14" fill="#334155"/>
+        <rect data-id="feet" x="232" y="178" width="36" height="14" fill="#334155"/>
+        <circle data-id="bolts" cx="118" cy="185" r="4" fill="#d4d4d8"/>
+        <circle data-id="bolts" cx="250" cy="185" r="4" fill="#d4d4d8"/>
+        <rect data-id="plate" x="40" y="192" width="320" height="12" fill="#1e293b"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const stageEl = $('#stage');
+const PARTS = [['housing','Корпус'],['front','Алдыңғы қақпақ'],['rear','Артқы қақпақ'],['shaft','Білік'],['rotor','Ротор'],['stator','Статор'],['fan','Желдеткіш'],['fanCover','Желдеткіш қақпағы'],['feet','Бекіту аяқтары'],['bolts','Бекіту болттары'],['terminal','Клеммалық қорап']];
+const NAMES = Object.fromEntries(PARTS); NAMES.plate = 'Монтаж негізі'; NAMES.cable = 'Электр кабелі';
+
+const STAGES = [
+ {t:'Жұмыс орнын дайындау', d:'Монтаж орны дайындалады, қажетті құралдар жиналады, электрқозғалтқыштың сыртқы жағдайы тексеріледі және қауіпсіздік талаптары сақталады.', hl:['plate']},
+ {t:'Орнату орнын белгілеу', d:'Электрқозғалтқыштың орналасатын орны және бекіту нүктелері алдын ала белгіленеді.', hl:['feet']},
+ {t:'Электрқозғалтқышты орнату', d:'Электрқозғалтқыш белгіленген монтаж орнына орналастырылады. Горизонтальдық және вертикальдық орналасуы тексеріледі.', hl:['housing','front','rear']},
+ {t:'Бекіту', d:'Электрқозғалтқыш монтаждық негізге сенімді бекітіледі. Бекіту элементтерінің беріктігі тексеріледі.', hl:['bolts','feet']},
+ {t:'Электрлік қосу', d:'Электрлік қосылыстар орындалады. Қосылыстардың дұрыстығы және қауіпсіздігі тексеріледі. ⚡', hl:['terminal','cable']},
+ {t:'Реттеу және туралау', d:'Біліктердің орналасуы тексеріледі. Қажет болған жағдайда туралау жүргізіледі. Дірілдің болмауы тексеріледі.', hl:['shaft','rotor'], x:'<span class="ok">✓ Дұрыс туралау</span> · Ось сәйкестігі'},
+ {t:'Тексеру және сынау', d:'Қозғалтқыштың білігі баяу айналады. Бақылау параметрлері тексеріледі.', hl:[], spin:true, x:'✓ Бөгде дыбыс жоқ · ✓ Шамадан тыс діріл жоқ · ✓ Қызу байқалмайды · ✓ Айналу бағыты дұрыс'}
+];
+
+let renderer, scene, camera, motor, fanGroup, axisL;
+const P = {}, ALL = [];
+let idx = 0, focus = null, auto = false, th = 0.7, ph = 1.25, R = 10, booted = false;
+
+function M(c, o){ return new THREE.MeshStandardMaterial({color:c, metalness:.45, roughness:.45, transparent:true, opacity:o, side:THREE.DoubleSide}); }
+function mk(par, geo, c, id, x=0, y=0, z=0, o=1){
+  const m = new THREE.Mesh(geo, M(c, o)); m.position.set(x, y, z);
+  m.userData = {id, op:o}; (P[id] = P[id] || []).push(m); ALL.push(m); par.add(m); return m;
+}
+function cyl(r, h, open){ const g = new THREE.CylinderGeometry(r, r, h, 36, 1, !!open); g.rotateZ(Math.PI/2); return g; }
+
+function build(){
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stageEl.insertBefore(renderer.domElement, stageEl.firstChild);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(40, 1, .1,100);
+  scene.add(new THREE.AmbientLight(0xffffff, .65));
+  const d = new THREE.DirectionalLight(0xffffff, .9); d.position.set(5, 8, 6); scene.add(d);
+  const f = new THREE.DirectionalLight(0x38bdf8, .35); f.position.set(-6, -2, -4); scene.add(f);
+
+  motor = new THREE.Group(); scene.add(motor);
+  mk(scene, new THREE.BoxGeometry(6, .2, 3), 0x1e293b, 'plate', 0, -1.3, 0);
+  mk(motor, cyl(1, 2.4, true), 0x475569, 'housing', 0, 0, 0, .4);
+  mk(motor, cyl(1.03, .12), 0x64748b, 'front', 1.3);
+  mk(motor, cyl(1.03, .12), 0x64748b, 'rear', -1.3);
+  mk(motor, cyl(.6, 2.2), 0x94a3b8, 'rotor');
+  mk(motor, cyl(.85, 2, true), 0xb87333, 'stator', 0, 0, 0, .9);
+  mk(motor, cyl(.12, 3.6), 0xcbd5e1, 'shaft', .6);
+  fanGroup = new THREE.Group(); fanGroup.position.x = -1.75; motor.add(fanGroup);
+  for (let k = 0; k < 4; k++){ const b = mk(fanGroup, new THREE.BoxGeometry(.08, .9, .22), 0x0ea5e9, 'fan'); b.rotation.x = k * Math.PI / 4; }
+  mk(motor, cyl(.95, .5, true), 0x38bdf8, 'fanCover', -2, 0, 0, .3);
+  for (const x of [-.8, .8]) mk(motor, new THREE.BoxGeometry(.4, .2, 1), 0x334155, 'feet', x, -1.1, 0);
+  for (const x of [-.8, .8]) for (const z of [-.35, .35]) mk(motor, new THREE.CylinderGeometry(.07, .07, .3, 12), 0xd4d4d8, 'bolts', x, -1.2, z);
+  mk(motor, new THREE.BoxGeometry(.6, .45, .6), 0x1e293b, 'terminal', .3, 1.22, 0);
+  const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(.3,1.45,0), new THREE.Vector3(.7,1.95,.5), new THREE.Vector3(1.6,1.6,1.1)]);
+  mk(motor, new THREE.TubeGeometry(curve, 24, .05, 8), 0x111827, 'cable');
+
+  axisL = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2.8,0,0), new THREE.Vector3(3.4,0,0)]), new THREE.LineBasicMaterial({color:0x38bdf8}));
+  axisL.visible = false; motor.add(axisL);
+
+  resize();
+  addEventListener('resize', resize);
+  bind();
+}
+
+function resize(){
+  if (!renderer) return;
+  const w = stageEl.clientWidth || 600, h = stageEl.clientHeight || 400;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+
+function bind(){
+  const c = renderer.domElement, ptrs = new Map(), ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let moved = 0, pinch = 0;
+  c.addEventListener('pointerdown', e => { c.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY}); if (ptrs.size === 1) moved = 0; });
+  c.addEventListener('pointermove', e => {
+    const p = ptrs.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    if (ptrs.size === 2){
+      const v = [...ptrs.values()], dist = Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y);
+      if (pinch) R = Math.min(16, Math.max(4, R * pinch / dist));
+      pinch = dist;
+    } else {
+      th -= dx * .008; ph = Math.min(2.8, Math.max(.25, ph - dy * .008));
+    }
+    moved += Math.abs(dx) + Math.abs(dy);
+  });
+  const up = e => {
+    const wasSingle = ptrs.size === 1;
+    ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0;
+    if (e.type === 'pointerup' && wasSingle && moved < 6){
+      const r = c.getBoundingClientRect();
+      ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(ALL)[0];
+      if (hit) setFocus(hit.object.userData.id);
+    }
+  };
+  c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  c.addEventListener('wheel', e => { e.preventDefault(); R = Math.min(16, Math.max(4, R + e.deltaY * .01)); }, {passive:false});
+  $('#tAuto').onclick = () => auto = !auto;
+  $('#tIn').onclick = () => R = Math.max(4, R - 1.5);
+  $('#tOut').onclick = () => R = Math.min(16, R + 1.5);
+  $('#tReset').onclick = () => { th = .7; ph = 1.25; R = 10; auto = false; };
+  requestAnimationFrame(loop);
+}
+
+function loop(){
+  const st = STAGES[idx];
+  if (motor){
+    motor.position.y += ((idx >= 2 ? 0 : 2.4) - motor.position.y) * .04;
+    if (st.spin){ [P.shaft[0], P.rotor[0], fanGroup].forEach(o => o.rotation.x -= .05); }
+    if (idx === 3) P.bolts.forEach(b => b.rotation.y += .06);
+    if (auto) th += .005;
+    camera.position.set(R * Math.sin(ph) * Math.cos(th), R * Math.cos(ph), R * Math.sin(ph) * Math.sin(th));
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(loop);
+}
+
+function applyHL(){
+  const st = STAGES[idx];
+  const keys = focus ? [focus] : st.hl, dim = keys.length > 0;
+  ALL.forEach(m => {
+    const on = !dim || keys.includes(m.userData.id);
+    m.material.opacity = on ? m.userData.op : m.userData.op * .15;
+    m.material.emissive.setHex(dim && on ? 0x1d4e89 : 0);
+  });
+  if (axisL) axisL.visible = idx === 5 || focus === 'shaft';
+  document.querySelectorAll('#fb [data-id]').forEach(el => { el.style.opacity = (!dim || keys.includes(el.dataset.id)) ? 1 : .15; });
+  document.querySelectorAll('#parts button').forEach(b => b.classList.toggle('on', b.dataset.id === focus));
+}
+
+function setFocus(id){
+  focus = focus === id ? null : id;
+  $('#pinfo').textContent = focus ? 'Таңдалған бөлшек: ' + NAMES[focus] : 'Бөлшекті таңдап, оның атауын көріңіз.';
+  applyHL();
+}
+
+function setStage(i){
+  idx = (i + STAGES.length) % STAGES.length; focus = null;
+  const st = STAGES[idx];
+  $('#cnt').textContent = String(idx + 1).padStart(2, '0') + ' / 07';
+  $('#stT').textContent = st.t; $('#stD').textContent = st.d; $('#stX').innerHTML = st.x || '';
+  $('#prev').disabled = idx === 0;
+  $('#next').textContent = idx === 6 ? 'Қорытынды →' : 'Келесі →';
+  document.querySelectorAll('#prog button').forEach((b, j) => { b.classList.toggle('on', j === idx); b.classList.toggle('done', j < idx); });
+  $('#pinfo').textContent = 'Бөлшекті таңдап, оның атауын көріңіз.';
+  applyHL();
+}
+
+function go(p){
+  document.querySelectorAll('.page').forEach(s => s.classList.toggle('on', s.id === p));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+  const slot = {home:'#heroSlot', sim:'#simSlot'}[p];
+  if (slot) $(slot).appendChild(stageEl);
+  if (p === 'sim') setStage(idx);
+  requestAnimationFrame(resize);
+  window.scrollTo(0, 0);
+}
+
+function boot(){
+  if (booted) return; booted = true;
+  try {
+    if (!window.THREE) throw new Error('three missing');
+    build();
+  } catch (err) {
+    stageEl.classList.add('fb');
+  }
+  const pg = $('#prog');
+  for (let j = 0; j < 7; j++){ const b = document.createElement('button'); b.textContent = String(j + 1).padStart(2, '0'); b.onclick = () => setStage(j); pg.appendChild(b); }
+  PARTS.forEach(([id, name], k) => { const b = document.createElement('button'); b.dataset.id = id; b.textContent = String(k + 1).padStart(2, '0') + ' ' + name; b.onclick = () => setFocus(id); $('#parts').appendChild(b); });
+  $('#prev').onclick = () => setStage(idx - 1);
+  $('#next').onclick = () => idx === 6 ? go('final') : setStage(idx + 1);
+  $('#again').onclick = () => { setStage(0); go('sim'); };
+  document.querySelectorAll('nav button, [data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.p || b.dataset.go)));
+  go('home'); setStage(0);
+}
+boot();
+</script>
+</body>
+</html>
